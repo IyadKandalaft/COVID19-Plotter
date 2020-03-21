@@ -12,11 +12,12 @@ class COVIDEnum(Enum):
     RECOVERED = 'recovered'
 
 
-class COVIDDataParser(object):
-    class DataFile(NamedTuple):
-        data_type: COVIDEnum
-        path: str
+class DataFile(NamedTuple):
+    data_type: COVIDEnum
+    path: str
 
+
+class COVIDDataParser(object):
     def __init__(self, infected_csv, dead_csv, recovered_csv, skip_first=2):
         super().__init__()
         self.data_files = []
@@ -106,7 +107,7 @@ class COVIDData(dict):
 
         if date not in self.data[country][data_type]:
             self._add_date(country, date)
-        
+
         # Add data from new record to existing value for that date
         # Existing value could be from records separted by province
         self.data[country][data_type][date] += value
@@ -140,10 +141,10 @@ class COVIDData(dict):
         str_date = COVIDData._format_date(date)
         if str_date not in self.data[country][data_type]:
             return None
-        
+
         if cumulative:
             return self.data[country][data_type][str_date]
-        
+
         dates = sorted(list(self.data[country][data_type].keys()))
         # Subtractive data is calculated by subtracting from the target date's
         # cumulative value the previous date's cumulative value
@@ -159,13 +160,13 @@ class COVIDData(dict):
     def get_recovered_bycountry(self, country, cumulative: bool = True):
         return self.get_bycountry(COVIDEnum.RECOVERED, country, cumulative)
 
-    def get_bycountry(self, data_type:COVIDEnum, country: str, cumulative: bool = True):
+    def get_bycountry(self, data_type: COVIDEnum, country: str, cumulative: bool = True):
         if country not in self.data:
             return None
 
         if cumulative:
             return self.data[country][data_type]
-        
+
         # Sort the keys (dates) because we can't rely on their order
         dates = sorted(list(self.data[country][data_type].keys()))
         # Subtractive data must be calculated from the existing cumulative data
@@ -175,7 +176,7 @@ class COVIDData(dict):
             prev_value = sub_data[day]
             sub_data[day] -= prev_day_total
             prev_day_total = prev_value
-            
+
         return sub_data
 
     @staticmethod
