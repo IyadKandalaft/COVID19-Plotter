@@ -1,6 +1,7 @@
 import logging
 from enum import Enum
 from datetime import date
+import csv
 from typing import NamedTuple
 
 logger = logging.getLogger('coviddata')
@@ -32,14 +33,15 @@ class COVIDDataParser(object):
 
         for data_file in self.data_files:
             with open(data_file.path) as f:
+                csv_reader = csv.reader(f, delimiter=',', quotechar='"')
                 line_count = 0
-                for line in f:
+                for line in csv_reader:
                     line_count += 1
                     if line_count <= self.skip_first:
                         continue
                     try:
                         (province, country, geo_lat, geo_long,
-                         str_date, str_value) = line.split(',')
+                         str_date, str_value) = line
                     except ValueError as e:
                         logger.debug(
                             f'Incorrect number of columns in {data_file.path}:{line_count}\n' +
@@ -115,6 +117,14 @@ class COVIDData(dict):
         # Set the total to the latest record we have for that counrty
         latest_date = sorted(list(self.data[country][data_type])).pop()
         self.data[country]['total'][data_type] = self.data[country][data_type][latest_date]
+
+    def get_countries(self):    
+        """Get countries that have data
+        
+        Returns:
+            list -- Countries that have data
+        """
+        return list(self.data.keys())
 
     def get_total_infected(self, country: str):
         return self.get_total(COVIDEnum.INFECTED, country)

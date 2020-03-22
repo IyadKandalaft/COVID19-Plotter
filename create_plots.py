@@ -1,33 +1,34 @@
 #!/usr/bin/env python3
 
-import coviddata
 import argparse
 from logging.config import dictConfig
 import logging
-import plotly.graph_objects as go
-import dash
-import dash_core_components as dcc
-import dash_html_components as html
+
+import app
+import coviddata
+
 
 # Setup logging
 logging_config = dict(
     version=1,
     formatters={
-        'f': {'format':
-              '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'}
+        'default': {
+            'format': '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
+        }
     },
     handlers={
-        'h': {'class': 'logging.StreamHandler',
-              'formatter': 'f',
-              'level': logging.DEBUG}
+        'handler': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'default',
+        },
     },
     root={
-        'handlers': ['h'],
-        'level': logging.DEBUG,
+        'handlers': ['handler'],
+        'level': 'DEBUG',
     },
 )
 dictConfig(logging_config)
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 def main():
@@ -36,46 +37,10 @@ def main():
         opts.infected, opts.recovered, opts.dead)
     covid_data = data_parser.parse()
 
-    data = []
-    for country in ['Canada', 'US', 'Australia', 'Italy']:
-        country_data = covid_data.get_infected_bycountry(country)
-        country_data_sub = covid_data.get_infected_bycountry(country, False)
-        data.append(go.Scatter(
-            x=list(country_data.keys()),
-            y=list(v / 1000 for v in country_data.values()),
-            text='Total Infected',
-            name=country
-        ))
-        data.append(
-            go.Bar(
-                x=list(country_data_sub.keys()),
-                y=list(v / 1000 for v in country_data_sub.values()),
-                text='New Infections',
-                name=country
-            )
-        )
+    app.set_data(covid_data)
+    app.create()
 
-    app = dash.Dash('COVID-19')
-    app.layout = html.Div(children=[
-        html.H1(children='COVID-19 Global Data Plotter'),
-        dcc.Dropdown(options=[{'label': 'a', 'value': 'a'}, {
-                     'label': 'b', 'value': 'b'}], multi=True, clearable=True, searchable=True, placeholder='Select country data to plot'),
-        dcc.Checklist(options=[{'label': 'Normalize', 'value': 'true'}, {
-            'label': 'b', 'value': 'b'}]),
-        html.Div(children='Dash: A web application framework for Python.'),
-
-        dcc.Graph(
-            id='example-graph',
-            figure={
-                'data': data,
-                'layout': {
-                    'title': 'Dash Data Visualization'
-                }
-            }
-        )
-    ])
-
-    app.run_server(debug=True)
+    server = app.start()
 
 
 def get_config():
@@ -85,6 +50,8 @@ def get_config():
     Returns:
         argparse.args -- An object containing the parsed command line parameters
     '''
+    logger.debug('Configuring command line parameters')
+
     parser = argparse.ArgumentParser(
         prog='create_graphs.py',
         description="Graphs COVID-19 data")
@@ -104,6 +71,7 @@ def get_config():
         required=True,
         help="Dead data file")
 
+    logger.debug('Parsing and validating command line parameters')
     return parser.parse_args()
 
 
