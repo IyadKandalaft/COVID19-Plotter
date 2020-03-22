@@ -5,6 +5,9 @@ import argparse
 from logging.config import dictConfig
 import logging
 import plotly.graph_objects as go
+import dash
+import dash_core_components as dcc
+import dash_html_components as html
 
 # Setup logging
 logging_config = dict(
@@ -35,15 +38,14 @@ def main():
 
     data = []
     for country in ['Canada', 'US', 'Australia', 'Italy']:
-        
         country_data = covid_data.get_infected_bycountry(country)
         country_data_sub = covid_data.get_infected_bycountry(country, False)
         data.append(go.Scatter(
-                x=list(country_data.keys()),
-                y=list(v / 1000 for v in country_data.values()),
-                text='Total Infected',
-                name=country
-            ))
+            x=list(country_data.keys()),
+            y=list(v / 1000 for v in country_data.values()),
+            text='Total Infected',
+            name=country
+        ))
         data.append(
             go.Bar(
                 x=list(country_data_sub.keys()),
@@ -52,8 +54,28 @@ def main():
                 name=country
             )
         )
-    fig = go.Figure(data=data)
-    fig.write_html('canada.html', auto_open=True)
+
+    app = dash.Dash('COVID-19')
+    app.layout = html.Div(children=[
+        html.H1(children='COVID-19 Global Data Plotter'),
+        dcc.Dropdown(options=[{'label': 'a', 'value': 'a'}, {
+                     'label': 'b', 'value': 'b'}], multi=True, clearable=True, searchable=True, placeholder='Select country data to plot'),
+        dcc.Checklist(options=[{'label': 'Normalize', 'value': 'true'}, {
+            'label': 'b', 'value': 'b'}]),
+        html.Div(children='Dash: A web application framework for Python.'),
+
+        dcc.Graph(
+            id='example-graph',
+            figure={
+                'data': data,
+                'layout': {
+                    'title': 'Dash Data Visualization'
+                }
+            }
+        )
+    ])
+
+    app.run_server(debug=True)
 
 
 def get_config():
