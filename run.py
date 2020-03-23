@@ -6,6 +6,7 @@ import logging
 
 import app
 import coviddata
+import populationdata
 
 
 # Setup logging
@@ -33,11 +34,20 @@ logger = logging.getLogger(__name__)
 
 def main():
     opts = get_config()
+
+    logger.info('Parsing COVID-19 data')
     data_parser = coviddata.COVIDDataParser(
         opts.infected, opts.recovered, opts.dead)
     covid_data = data_parser.parse()
 
-    app.set_data(covid_data)
+    logger.info('Parsing population data')
+    population_data = populationdata.PopulationDataParser(
+        opts.population).parse()
+    population_data.add_country_aliases('United States of America', 'US', 'USA')
+    population_data.add_country_aliases('Dem. People\'s Republic of Korea', 'North Korea', 'Korea, North')
+    population_data.add_country_aliases('Republic of Korea', 'South Korea', 'Korea, South')
+
+    app.set_data(covid_data, population_data)
     app.create()
 
     server = app.start()
@@ -70,6 +80,11 @@ def get_config():
         "-d", "--dead",
         required=True,
         help="Dead data file")
+
+    parser.add_argument(
+        "-p", "--population",
+        required=True,
+        help="Population data file")
 
     logger.debug('Parsing and validating command line parameters')
     return parser.parse_args()

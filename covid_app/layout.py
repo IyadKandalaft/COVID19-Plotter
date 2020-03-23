@@ -3,10 +3,12 @@ import dash_html_components as html
 import logging
 
 from coviddata import COVIDData
+from populationdata import PopulationData
 
 logger = logging.getLogger(__name__)
 
 covid_data = []
+population_data = None
 
 
 def create_layout(app):
@@ -93,11 +95,15 @@ def _populate_search(dropdown: dcc.Dropdown):
     dropdown.value = ['Canada:infected', 'Canada:recovered', 'Canada:dead']
 
 
-def _set_data(input_covid_data: COVIDData):
+def _set_data(input_covid_data: COVIDData, input_pop_data: PopulationData):
     """Pass data into the application to permit access to Dash components
 
     Arguments:
-        input_covid_data {COVIDData} -- COVID-19 datasets
+        input_covid_data {COVIDData} -- COVID-19 datasets 
+        input_pop_data {PopulationData} -- Population datasets      
     """
     global covid_data
+    global population_data
+
     covid_data = input_covid_data
+    population_data = input_pop_data

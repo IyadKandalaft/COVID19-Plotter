@@ -2,6 +2,7 @@ import logging
 from enum import Enum
 from datetime import date
 import csv
+import re
 from typing import NamedTuple
 
 logger = logging.getLogger('coviddata')
@@ -30,7 +31,7 @@ class COVIDDataParser(object):
 
     def parse(self):
         covid_data = COVIDData()
-
+        country_re_brackets = re.compile(r'\(.+\)')
         for data_file in self.data_files:
             with open(data_file.path) as f:
                 csv_reader = csv.reader(f, delimiter=',', quotechar='"')
@@ -48,6 +49,11 @@ class COVIDDataParser(object):
                             f'Line content: {line}'
                         )
                         continue
+
+                    country = country_re_brackets.sub('', country)
+                    if country.endswith(', The'):
+                        country = country[:-5]
+
                     date = COVIDDataParser._parse_date(str_date)
                     value = int(str_value)
 
@@ -73,7 +79,7 @@ class COVIDData(dict):
         super().__init__()
         self.data = {}
 
-    def add_data(self, data_type: COVIDEnum, country: str, date: date, val: int):
+    def add_data(self, data_type: COVIDEnum, country: str, date: date, val: float):
         if country == '':
             raise ValueError('Country cannot be empty')
         try:
@@ -118,9 +124,9 @@ class COVIDData(dict):
         latest_date = sorted(list(self.data[country][data_type])).pop()
         self.data[country]['total'][data_type] = self.data[country][data_type][latest_date]
 
-    def get_countries(self):    
+    def get_countries(self):
         """Get countries that have data
-        
+
         Returns:
             list -- Countries that have data
         """

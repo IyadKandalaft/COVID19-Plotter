@@ -3,10 +3,12 @@ import dash_core_components as dcc
 import logging
 
 from coviddata import COVIDData
+from populationdata import PopulationData
 
 logger = logging.getLogger(__name__)
 
 covid_data = None
+population_data = None
 
 
 def register_callbacks(app):
@@ -51,11 +53,13 @@ def register_callbacks(app):
             else:
                 country_data = covid_data.get_infected_bycountry(country)
 
+            country_pop = population_data.get_total(country)
+
             x = list(country_data.keys())
             if normalization == 'per-1000':
-                y = list(v / 10000 for v in country_data.values())
+                y = list(v * 1000 / country_pop for v in country_data.values())
             elif normalization == 'per-capita':
-                y = list(v / 1000 for v in country_data.values())
+                y = list(v / country_pop for v in country_data.values())
             else:
                 y = list(country_data.values())
 
@@ -80,11 +84,15 @@ def _get_plot_dict(data_points: list = []):
     }
 
 
-def _set_data(input_covid_data):
+def _set_data(input_covid_data: COVIDData, input_pop_data: PopulationData):
     """Pass data into the application to permit access to Dash components
 
     Arguments:
         input_covid_data {COVIDData} -- COVID-19 datasets
+        input_pop_data {PopulationData} -- Population datasets
     """
     global covid_data
+    global population_data
+
     covid_data = input_covid_data
+    population_data = input_pop_data
