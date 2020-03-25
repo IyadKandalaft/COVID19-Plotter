@@ -6,6 +6,7 @@ import logging
 
 import app
 import coviddata
+import gunicorn.app.base
 import populationdata
 
 
@@ -51,7 +52,12 @@ def main():
     app.create()
 
     server = app.start()
-
+    
+    options = {
+        'bind': '%s:%s' % ('0.0.0.0', '9000'),
+        'workers': 2
+    }
+    StandaloneApplication(server, options).run()
 
 def get_config():
     '''
@@ -89,6 +95,21 @@ def get_config():
     logger.debug('Parsing and validating command line parameters')
     return parser.parse_args()
 
+class StandaloneApplication(gunicorn.app.base.BaseApplication):
+
+    def __init__(self, app, options=None):
+        self.options = options or {}
+        self.application = app
+        super().__init__()
+
+    def load_config(self):
+        config = {key: value for key, value in self.options.items()
+                  if key in self.cfg.settings and value is not None}
+        for key, value in config.items():
+            self.cfg.set(key.lower(), value)
+
+    def load(self):
+        return self.application
 
 if __name__ == "__main__":
     main()

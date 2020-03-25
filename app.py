@@ -57,6 +57,7 @@ def start():
 
     if app != None:
         logger.debug('Starting flask server')
-        app.run_server(debug=True)
-
-    return app.server
+        
+        return app.server
+    
+    return None
