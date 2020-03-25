@@ -39,7 +39,7 @@ class PopulationDataParser(object):
             PopulationData -- Population data encapsulation object
         """
         pop_data = PopulationData()
-        with open(self.data_file) as f:
+        with open(self.data_file, buffering=131072) as f:
             logger.info(f'Parsing population data file {self.data_file}')
 
             csv_reader = csv.reader(f, delimiter=',', quotechar='"')

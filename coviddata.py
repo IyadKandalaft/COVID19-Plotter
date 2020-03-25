@@ -33,7 +33,7 @@ class COVIDDataParser(object):
         covid_data = COVIDData()
         country_re_brackets = re.compile(r'\(.+\)')
         for data_file in self.data_files:
-            with open(data_file.path) as f:
+            with open(data_file.path, buffering=16384) as f:
                 csv_reader = csv.reader(f, delimiter=',', quotechar='"')
                 line_count = 0
                 for line in csv_reader:
@@ -55,7 +55,10 @@ class COVIDDataParser(object):
                         country = country[:-5]
 
                     date = COVIDDataParser._parse_date(str_date)
-                    value = int(str_value)
+                    if str_value == '':
+                        value = 0
+                    else:
+                        value = int(str_value)
 
                     covid_data.add_data(data_file.data_type,
                                         country, date, value)
