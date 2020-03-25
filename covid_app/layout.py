@@ -49,25 +49,43 @@ def create_layout(app):
             'layout': {
                 'title': 'Dash Data Visualization'
             }
+        },
+        config={
+            'editable': True,
+            'showTips': True
         }
     )
 
     logger.debug('Creating normalization radio buttons')
     normalization_rb = dcc.RadioItems(
         id='normalization-rb',
+        labelStyle={
+            'display': 'block'
+        },
         options=[
             {'label': 'None', 'value': 'none'},
             {'label': 'Per 1000 people', 'value': 'per-1000'},
             {'label': 'Per capita', 'value': 'per-capita'}
         ],
-        value='none'
+        value='none',
+    )
+    normalization_fs = html.Fieldset(
+        style={
+            'display': 'inline-block'
+        },
+        children=[
+            html.Legend(children='Normalization'),
+            normalization_rb
+        ],
+        draggable=True,
+
     )
 
     logger.debug('Adding sub-components to top-level DIV')
     page.children.append(page_title)
     page.children.append(app_description)
     page.children.append(search_field)
-    page.children.append(normalization_rb)
+    page.children.append(normalization_fs)
     page.children.append(main_plot)
 
     logger.info('Setting application layout')
