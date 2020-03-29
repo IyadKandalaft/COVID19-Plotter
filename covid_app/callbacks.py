@@ -24,10 +24,13 @@ def register_callbacks(app):
         Output('main-plot', 'figure'),
         [
             Input('search-field', 'value'),
-            Input('normalization-rb', 'value')
+            Input('normalization-rb', 'value'),
+            Input('chart-infected-rb', 'value'),
+            Input('chart-dead-rb', 'value'),
+            Input('chart-recovered-rb', 'value'),
         ]
     )
-    def search_callback(request_items, normalization):
+    def search_callback(request_items, normalization, chart_infected_type, chart_dead_type, chart_recovered_type):
         """Callback that generates the data for the main-plot figure
 
         Arguments:
@@ -48,10 +51,14 @@ def register_callbacks(app):
             (country, data_type) = request_item.split(':')
             if data_type == 'recovered':
                 country_data = covid_data.get_recovered_bycountry(country)
+                graph_type = chart_recovered_type
             elif data_type == 'dead':
                 country_data = covid_data.get_dead_bycountry(country)
+                graph_type = chart_dead_type
             else:
                 country_data = covid_data.get_infected_bycountry(country)
+                graph_type = chart_infected_type
+
 
             country_pop = population_data.get_total(country)
 
@@ -65,7 +72,10 @@ def register_callbacks(app):
 
             plot_data.append(
                 {
-                    'type': 'line',
+                    'type': graph_type,
+                    if graph_type == 'sunburt':
+                        'z': 1
+
                     'x': x,
                     'y': y,
                     'text': f'{country} ({data_type})',

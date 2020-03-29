@@ -81,11 +81,38 @@ def create_layout(app):
 
     )
 
+    logger.debug('Creating infected chart type radio buttons')
+    chart_option_elems = []
+    for data_type in ('infected', 'dead', 'recovered'):
+        chart_type_rb = dcc.RadioItems(
+            id=f'chart-{data_type}-rb',
+            labelStyle={
+                'display': 'block'
+            },
+            options=[
+                {'label': 'Line', 'value': 'line'},
+                {'label': 'Bar', 'value': 'bar'},
+            ],
+            value='line',
+        )
+        chart_option_elems.append(
+            html.Fieldset(
+                style={
+                    'display': 'inline-block'
+                },
+                children=[
+                    html.Legend(children=f'Plot Type ({data_type})'),
+                    chart_type_rb
+                ],
+                draggable=True
+            )
+        )
     logger.debug('Adding sub-components to top-level DIV')
     page.children.append(page_title)
     page.children.append(app_description)
     page.children.append(search_field)
     page.children.append(normalization_fs)
+    page.children.extend(chart_option_elems)
     page.children.append(main_plot)
 
     logger.info('Setting application layout')
