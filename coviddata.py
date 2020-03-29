@@ -1,8 +1,8 @@
-import logging
-from enum import Enum
-from datetime import date
 import csv
-import re
+import logging
+from re import compile, Pattern
+from datetime import date
+from enum import Enum
 from typing import NamedTuple
 
 logger = logging.getLogger('coviddata')
@@ -31,43 +31,55 @@ class COVIDDataParser(object):
 
     def parse(self):
         covid_data = COVIDData()
-        country_re_brackets = re.compile(r'\(.+\)')
+        country_re_brackets = compile(r'\(.+\)')
         for data_file in self.data_files:
             with open(data_file.path, buffering=16384) as f:
-                csv_reader = csv.reader(f, delimiter=',', quotechar='"')
+                csv_reader = csv.DictReader(
+                    f, delimiter=',', quotechar='"', restkey='extradata')
                 line_count = 0
-                for line in csv_reader:
+                for row in csv_reader:
                     line_count += 1
                     if line_count <= self.skip_first:
                         continue
-                    try:
-                        (province, country, geo_lat, geo_long,
-                         str_date, str_value) = line
-                    except ValueError as e:
+                    if 'extradata' in row and row['extradata'] != None:
                         logger.debug(
                             f'Incorrect number of columns in {data_file.path}:{line_count}\n' +
-                            f'Line content: {line}'
+                            f'Line content: {row}'
                         )
                         continue
 
+                    province = row['Province/State']
+                    country = row['Country/Region']
                     country = country_re_brackets.sub('', country)
                     if country.endswith(', The'):
                         country = country[:-5]
 
-                    date = COVIDDataParser._parse_date(str_date)
-                    if str_value == '':
-                        value = 0
-                    else:
-                        value = int(str_value)
-
-                    covid_data.add_data(data_file.data_type,
-                                        country, date, value)
+                    for key, str_value in row.items():
+                        date = COVIDDataParser._parse_date(key)
+                        if date is None:
+                            continue
+                        if str_value is None or str_value == '':
+                            value = 0
+                        else:
+                            value = int(str_value)
+                        covid_data.add_data(data_file.data_type,
+                                            country, date, value)
 
         return covid_data
 
     @staticmethod
     def _parse_date(str_date: str):
-        (year, month, day) = list(map(int, str_date.split('-')))
+        date_pattern = compile(r'\d{1,2}/\d{1,2}/\d{2,4}')
+        if date_pattern.fullmatch(str_date) is None:
+            return None
+
+        (month, day, year) = list(map(int, str_date.split('/')))
+        year += 2000
+        if month < 1 or month > 12 or \
+                day < 1 or day > 31 or \
+                year < 2000 or year > 3000:
+            return None
+
         return date(year, month, day)
 
 
